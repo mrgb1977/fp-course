@@ -33,6 +33,40 @@ newtype State s a =
       -> (a, s)
   }
 
+newtype State2 s a =
+  StateCon {
+    runState2 ::
+      s
+      -> (a, s)
+  }
+
+-- :t State2
+
+-- <interactive>:1:1:
+--    Not in scope: data constructor ‘State2’
+--    Perhaps you meant one of these:
+--      ‘State’ (imported from Course.State),
+--      ‘StateT’ (imported from Course.StateT)
+-- >> :t StateCon
+-- StateCon :: (s -> (a, s)) -> State2 s a
+-- >> :k State2
+-- State2 :: * -> * -> *
+-- >> :k StateCon
+
+-- <interactive>:1:1:
+--    Not in scope: type constructor or class ‘StateCon’
+--    A data constructor of that name is in scope; did you mean DataKinds?
+
+
+-- State s a is a function from s to an (a, s)
+
+-- kind of state State :: * -> * -> *
+-- match with type :: (s -> (a, s)) -> State s a
+-- kind of State s :: * -> *
+-- mixing and matching contructor with type?
+
+-- notes State s is the target state
+
 -- | Implement the `Functor` instance for `State s`.
 -- >>> runState ((+1) <$> pure 0) 0
 -- (1,0)
@@ -41,8 +75,30 @@ instance Functor (State s) where
     (a -> b)
     -> State s a
     -> State s b
-  (<$>) =
-      error "todo: Course.State#(<$>)"
+--  (<$>)  f (StateCon x)  = StateCon(s' -> x s'
+  (<$>)  f (State s)  = State(\s' -> let (a,b) = s s' in (f a, b))
+--  (<$>)  f (State s)  = 
+-- f <$> state k = 
+ -- f :: a -> b
+-- k :: s -> (a,b)
+----
+-- goal :: s -> (b,s)
+
+-- State(undefined)
+-- State(\s -> (undefined, undefine)
+
+
+--runState(x) . StateCon(\s' -> ((f a), s'))
+
+-- s :: s -> (a,s)
+-- s' :: s
+-- goal :: s -> (b,s)
+
+
+--case runState(x) of
+--                             (a,s') -> StateCon(\s' -> ((f a), s'))
+--      error "todo: Course.State#(<$>)"
+
 
 -- | Implement the `Apply` instance for `State s`.
 -- >>> runState (pure (+1) <*> pure 0) 0
@@ -56,8 +112,24 @@ instance Apply (State s) where
     State s (a -> b)
     -> State s a
     -> State s b 
-  (<*>) =
-    error "todo: Course.State (<*>)#instance (State s)"
+  (<*>) (State f) (State s) = State(\s' -> let (g, b) = f s'
+                                               (a, c) = s b in
+                                               (g a, c))
+
+--
+-- Q what is the lamda function representing and what is it taking as input?
+-- from where
+--
+  
+-- f :: s -> ((a->b), s)
+-- s :: s -> (a, s)
+-- a :: a
+----
+-- goal :: s -> (b,s)
+
+-- goal :: (b,s)
+
+--    error "todo: Course.State (<*>)#instance (State s)"
 
 -- | Implement the `Applicative` instance for `State s`.
 -- >>> runState (pure 2) 0
@@ -66,8 +138,8 @@ instance Applicative (State s) where
   pure ::
     a
     -> State s a
-  pure =
-    error "todo: Course.State pure#instance (State s)"
+  pure a = State(\s -> (a,s))
+ --   error "todo: Course.State pure#instance (State s)"
 
 -- | Implement the `Bind` instance for `State s`.
 -- >>> runState ((const $ put 2) =<< put 1) 0
@@ -77,8 +149,15 @@ instance Bind (State s) where
     (a -> State s b)
     -> State s a
     -> State s b
-  (=<<) =
-    error "todo: Course.State (=<<)#instance (State s)"
+  (=<<) f (State k) = State(\s -> let (a, t) = k s
+                                    in runState(f a) t)
+-- State s b has the same structure as
+-- f :: s -> State s b ~ s -> (b,s)
+-- k :: s -> (a,s)
+-- s :: s
+----
+-- ? :: (b,s)
+--   error "todo: Course.State (=<<)#instance (State s)"
 
 instance Monad (State s) where
 
@@ -89,8 +168,8 @@ exec ::
   State s a
   -> s
   -> s
-exec =
-  error "todo: Course.State#exec"
+exec (State k) s = snd (k s)
+--  error "todo: Course.State#exec"
 
 -- | Run the `State` seeded with `s` and retrieve the resulting value.
 --
@@ -99,8 +178,8 @@ eval ::
   State s a
   -> s
   -> a
-eval =
-  error "todo: Course.State#eval"
+eval (State k) = fst . k
+--  error "todo: Course.State#eval"
 
 -- | A `State` where the state also distributes into the produced value.
 --
@@ -108,8 +187,8 @@ eval =
 -- (0,0)
 get ::
   State s s
-get =
-  error "todo: Course.State#get"
+get = State(\s -> (s, s))
+--  error "todo: Course.State#get"
 
 -- | A `State` where the resulting state is seeded with the given value.
 --
@@ -118,8 +197,8 @@ get =
 put ::
   s
   -> State s ()
-put =
-  error "todo: Course.State#put"
+put s = State(\_ -> ((),s))
+--  error "todo: Course.State#put"
 
 -- | Find the first element in a `List` that satisfies a given predicate.
 -- It is possible that no element is found, hence an `Optional` result.
@@ -140,8 +219,23 @@ findM ::
   (a -> f Bool)
   -> List a
   -> f (Optional a)
-findM =
-  error "todo: Course.State#findM"
+findM _ Nil = pure Empty
+findM p (h:.t) = p h >>= \b -> if b then pure (Full h) else findM p t
+--
+--
+-- bind to get access to variables??
+--
+--
+-- f :: a -> f Bool
+-- la :: List a
+----
+-- ? ::
+
+
+
+--
+--
+--  error "todo: Course.State#findM"
 
 -- | Find the first element in a `List` that repeats.
 -- It is possible that no element repeats, hence an `Optional` result.
@@ -154,8 +248,20 @@ firstRepeat ::
   Ord a =>
   List a
   -> Optional a
-firstRepeat =
-  error "todo: Course.State#firstRepeat"
+firstRepeat Nil = Empty
+--firstRepeat list = eval (findM undefined list) S.empty
+--firstRepeat list = eval (findM (\a -> undefined) list) S.empty
+--firstRepeat list = eval (findM (\a -> State undefined) list) S.empty
+--firstRepeat list = eval (findM (\a -> 
+--                     State (\s -> (undefined, undefined))) list) S.empty
+firstRepeat list = eval (findM (\a -> 
+                     State (\s -> (S.member a s, S.insert a s))) list) S.empty
+-- eval (this state value) (with beginning state)
+--
+-- \a -> if a in set we have found it else put a in set and we have not found it
+--  error "todo: Course.State#firstRepeat"
+
+-- also note that findM returns an (Optional a)
 
 -- | Remove all duplicate elements in a `List`.
 -- /Tip:/ Use `filtering` and `State` with a @Data.Set#Set@.
@@ -194,5 +300,12 @@ distinct =
 isHappy ::
   Integer
   -> Bool
-isHappy =
-  error "todo: Course.State#isHappy"
+--isHappy integer = undefined --digitToInt(integer)
+isHappy n = let r = produce (toInteger . sum . map (join(*) . digitToInt) . show') n
+                s = firstRepeat r
+                t = contains 1 s
+                in t
+
+
+-- \a -> calc happy func on a, if happy func 0/1 good else if in set return fail else add to set and continue
+--  error "todo: Course.State#isHappy"

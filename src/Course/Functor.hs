@@ -40,9 +40,9 @@ instance Functor Id where
   (<$>) ::
     (a -> b)
     -> Id a
-    -> Id b
-  (<$>) =
-    error "todo: Course.Functor (<$>)#instance Id"
+    -> Id b -- data Id x = Id x (Id is data type constructor (as well as data type name, just like Empty/Full, or even :. or Nil from our list!)
+  (<$>) f (Id a) = Id (f a)
+--    error "todo: Course.Functor (<$>)#instance Id"
 
 -- | Maps a function on the List functor.
 --
@@ -56,8 +56,11 @@ instance Functor List where
     (a -> b)
     -> List a
     -> List b
-  (<$>) =
-    error "todo: Course.Functor (<$>)#instance List"
+  (<$>) _ Nil = Nil
+  (<$>) f (h:.t) = f h :. (<$>) f t
+-- or just
+--  (<$>) = map
+--    error "todo: Course.Functor (<$>)#instance List"
 
 -- | Maps a function on the Optional functor.
 --
@@ -71,20 +74,30 @@ instance Functor Optional where
     (a -> b)
     -> Optional a
     -> Optional b
-  (<$>) =
-    error "todo: Course.Functor (<$>)#instance Optional"
+  (<$>) _ Empty = Empty
+  (<$>) f (Full a) = Full (f a)
+--    error "todo: Course.Functor (<$>)#instance Optional"
 
 -- | Maps a function on the reader ((->) t) functor.
 --
 -- >>> ((+1) <$> (*2)) 8
 -- 17
+-- (->) t == t -> ?
+-- (->) has kind * -> * -> * (type to type to type)
+-- (->) String has kind * -> *
+-- (->) String Int has kind *
 instance Functor ((->) t) where
   (<$>) ::
     (a -> b)
-    -> ((->) t a)
-    -> ((->) t b)
-  (<$>) =
-    error "todo: Course.Functor (<$>)#((->) t)"
+    -> ((->) t a) -- (t -> a)
+    -> ((->) t b) -- (t -> b)
+-- point full style
+--          (a -> b) -> (t -> a) -> (t -> b)
+--  (<$>)    a_to_b      t_to_a      t =
+--           a_to_b (t_to_a t)
+--  (<$>) f g = f . g
+  (<$>) = (.)
+--    error "todo: Course.Functor (<$>)#((->) t)"
 
 -- | Anonymous map. Maps a constant value on a functor.
 --
@@ -99,8 +112,10 @@ instance Functor ((->) t) where
   a
   -> f b
   -> f a
-(<$) =
-  error "todo: Course.Functor#(<$)"
+(<$) a g = (\_ -> a) <$> g
+--(<$) a b = const a <$> b
+--(<$) = (<$>) . const
+--  error "todo: Course.Functor#(<$)"
 
 -- | Anonymous map producing unit value.
 --
@@ -115,12 +130,13 @@ instance Functor ((->) t) where
 --
 -- >>> void (+10) 5
 -- ()
+-- just use the anonymous map to map the unit ()
 void ::
   Functor f =>
   f a
   -> f ()
-void =
-  error "todo: Course.Functor#void"
+void = (<$) ()
+--  error "todo: Course.Functor#void"
 
 -----------------------
 -- SUPPORT LIBRARIES --

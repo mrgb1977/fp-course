@@ -6,6 +6,8 @@
 
 module Course.StateT where
 
+-- monad transformer
+
 import Course.Core
 import Course.Id
 import Course.Optional

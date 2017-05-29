@@ -23,6 +23,9 @@ The monad type-class provides no additional methods to `Applicative` and `Bind`.
 
 -}
 
+-- Monad supports "bind pure apply fmap"
+-- Functor -> Apply -> Applicative -> Bind -> Monad
+--
 class (Applicative f, Bind f) => Monad f where
 
 instance Monad Id where

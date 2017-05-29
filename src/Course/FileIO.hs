@@ -63,40 +63,81 @@ the contents of c
 main ::
   IO ()
 main =
-  error "todo: Course.FileIO#main"
+  getArgs >>= \a ->
+  case a of
+    (h:._) -> run h
+    Nil -> putStrLn "need to pass args!"
+--  error "todo: Course.FileIO#main"
+
+
+--getArgs >>= \a ->
+--  case a of
+--    (h:._) -> undefined
+--    Nil -> putStrLn "need to pass args!"
 
 type FilePath =
   Chars
 
 -- /Tip:/ Use @getFiles@ and @printFiles@.
 run ::
-  Chars
+  FilePath
   -> IO ()
-run =
-  error "todo: Course.FileIO#run"
+run file =
+  readFile file >>= \c ->
+  getFiles (lines c) >>= \d ->
+  printFiles d 
+--
+--alt do notation:
+-- do c <- readFile file
+--      <- getFiles (lines c)
+--      printFiles d
+--
+--
+-- gluing IO actions together?
+--  error "todo: Course.FileIO#run"
 
 getFiles ::
   List FilePath
   -> IO (List (FilePath, Chars))
-getFiles =
-  error "todo: Course.FileIO#getFiles"
+getFiles files = sequence (getFile <$> files)
+-- sequence . (<$>) getFile
+--  error "todo: Course.FileIO#getFiles"
 
 getFile ::
-  FilePath
-  -> IO (FilePath, Chars)
-getFile =
-  error "todo: Course.FileIO#getFile"
+  FilePath                -- 
+  -> IO (FilePath, Chars) -- 
+getFile n = -- f = ((pure f), (readFile f))
+--  readFile n >>= \c -> pure (n, c)
+  (>>=) (readFile n) (\c -> pure (n, c))
+--       (IO Chars)
+--(>>=)  f        a -> (a -> f    b) ->     f b
+--(>>=) :: Bind f => f a -> (a -> f b) -> f b
+--pure :: Applicative f => a -> f a
+-- or
+-- bind and pure may as well have just done fmap
+-- (\c -> (n,c)) <$> readFile n)
+--  error "todo: Course.FileIO#getFile"
+
+-- <$> :: (               Char -> (FilePath, Chars)) -> IO Chars -> IO (FilePath, Chars)
+-- (<$>) :: Functor f => (a    ->  b)                -> f  a     -> f   b
+-- 
+--
 
 printFiles ::
   List (FilePath, Chars)
   -> IO ()
-printFiles =
-  error "todo: Course.FileIO#printFiles"
+printFiles files = 
+  void (sequence ((\(n,c) -> printFile n c) <$> files))
+-- void . sequence . (<$>) . (uncurry printFile)
+--  error "todo: Course.FileIO#printFiles"
 
 printFile ::
   FilePath
   -> Chars
   -> IO ()
-printFile =
-  error "todo: Course.FileIO#printFile"
+printFile n c = --fp = readFile fp
+  putStrLn("======== " ++n) >>= \_ ->
+  putStrLn c
+
+--  error "todo: Course.FileIO#printFile"
 

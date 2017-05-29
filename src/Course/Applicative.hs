@@ -46,8 +46,11 @@ class Apply f => Applicative f where
   (a -> b)
   -> f a
   -> f b
-(<$>) =
-  error "todo: Course.Applicative#(<$>)"
+(<$>) k a = pure k <*> a
+-- (<$>) = (<*>) . pure
+
+-- f (a -> b)
+--  error "todo: Course.Applicative#(<$>)"
 
 -- | Insert into Id.
 --
@@ -56,8 +59,8 @@ instance Applicative Id where
   pure ::
     a
     -> Id a
-  pure =
-    error "todo: Course.Applicative pure#instance Id"
+  pure = Id
+--    error "todo: Course.Applicative pure#instance Id"
 
 -- | Insert into a List.
 --
@@ -66,8 +69,8 @@ instance Applicative List where
   pure ::
     a
     -> List a
-  pure =
-    error "todo: Course.Applicative pure#instance List"
+  pure x = x :. Nil
+--    error "todo: Course.Applicative pure#instance List"
 
 -- | Insert into an Optional.
 --
@@ -76,8 +79,8 @@ instance Applicative Optional where
   pure ::
     a
     -> Optional a
-  pure =
-    error "todo: Course.Applicative pure#instance Optional"
+  pure = Full
+--    error "todo: Course.Applicative pure#instance Optional"
 
 -- | Insert into a constant function.
 --
@@ -86,8 +89,8 @@ instance Applicative ((->) t) where
   pure ::
     a
     -> ((->) t a)
-  pure =
-    error "todo: Course.Applicative pure#((->) t)"
+  pure = const -- aka s combinator
+--    error "todo: Course.Applicative pure#((->) t)"
 
 -- | Sequences a list of structures to a structure of list.
 --
@@ -107,10 +110,31 @@ instance Applicative ((->) t) where
 -- [60,8]
 sequence ::
   Applicative f =>
-  List (f a)
+  List (f a)  -- list made up of Nil or :.
   -> f (List a)
-sequence =
-  error "todo: Course.Applicative#sequence"
+sequence Nil = pure Nil
+sequence (h:.t) = (:.) <$> h <*> sequence t
+-- t :: List (f a)
+-- sequence t :: f (List a)
+-- h :: f a
+--
+-- how to get a out of f a?
+--
+-- (    a ->    List a ->     List a) 
+-- -> f a -> f (List a) -> f (List a)
+--
+-- sequence (h:.t) = (:.) <$> h <*> sequence t
+--
+-- which is lift2
+-- lift2 (:.) h (sequnce t)
+--
+-- or using foldright
+-- foldRight (lift2 (:.)) (pure Nil)
+----
+--
+-- ? :: f (List a)
+--sequence (h:.t) = 
+--  error "todo: Course.Applicative#sequence"
 
 -- | Replicate an effect a given number of times.
 --
@@ -133,8 +157,9 @@ replicateA ::
   Int
   -> f a
   -> f (List a)
-replicateA =
-  error "todo: Course.Applicative#replicateA"
+replicateA n a = sequence (replicate n a)
+-- replicateA n sequence .replicate n
+--  error "todo: Course.Applicative#replicateA"
 
 -- | Filter a list with a predicate that produces an effect.
 --
@@ -161,8 +186,9 @@ filtering ::
   (a -> f Bool)
   -> List a
   -> f (List a)
-filtering =
-  error "todo: Course.Applicative#filtering"
+filtering _ Nil = pure Nil
+filtering p (h:.t) = (\b -> if b then (h:.) else id) <$> p h <*> filtering p t
+--  error "todo: Course.Applicative#filtering"
 
 -----------------------
 -- SUPPORT LIBRARIES --

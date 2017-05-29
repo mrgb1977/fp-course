@@ -22,6 +22,11 @@ bindOptional :: (a -> Optional b) -> Optional a -> Optional b
 bindOptional _ Empty    = Empty
 bindOptional f (Full a) = f a
 
+-- pattern same (a -> f b) -> f a -> f b
+-- what are we doing
+-- given a function that maps a onto Optional b,
+-- apply it to all Our Optional a and return Optional b
+
 (??) :: Optional a -> a -> a
 Empty ?? d  = d
 Full a ?? _ = a
@@ -33,6 +38,7 @@ k <+> _     = k
 applyOptional :: Optional (a -> b) -> Optional a -> Optional b
 applyOptional f a = bindOptional (\f' -> mapOptional (\a' -> f' a') a) f
 
+-- lifting
 twiceOptional :: (a -> b -> c) -> Optional a -> Optional b -> Optional c
 twiceOptional f = applyOptional . mapOptional f
 
