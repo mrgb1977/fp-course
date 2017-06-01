@@ -41,8 +41,8 @@ instance Functor Id where
     (a -> b)
     -> Id a
     -> Id b
-  (<$>) =
-    error "todo: Course.Functor (<$>)#instance Id"
+  (<$>) f (Id a) = Id (f a)
+--    error "todo: Course.Functor (<$>)#instance Id"
 
 -- | Maps a function on the List functor.
 --
@@ -56,8 +56,11 @@ instance Functor List where
     (a -> b)
     -> List a
     -> List b
-  (<$>) =
-    error "todo: Course.Functor (<$>)#instance List"
+--  (<$>) _ Nil = Nil
+--  (<$>) f (h:.t) = (f h) :. (<$>) f t 
+--  (<$>) f = foldRight ((:.).f) Nil
+  (<$>) = map
+--    error "todo: Course.Functor (<$>)#instance List"
 
 -- | Maps a function on the Optional functor.
 --
@@ -71,20 +74,35 @@ instance Functor Optional where
     (a -> b)
     -> Optional a
     -> Optional b
-  (<$>) =
-    error "todo: Course.Functor (<$>)#instance Optional"
+--  (<$>) _ Empty = Empty
+--  (<$>) f (Full a) = Full (f a)
+  (<$>) = mapOptional
+--    error "todo: Course.Functor (<$>)#instance Optional"
 
 -- | Maps a function on the reader ((->) t) functor.
 --
 -- >>> ((+1) <$> (*2)) 8
 -- 17
+
+--((->) t) type constryctur that takes 1 argument
+-- :kind Optional * -> *
+-- functor takes one type to a type (unary type constrctor) as per ((->) t)
+-- :k (->) * -> * -> *, not a functor (*->*), incorrect kind
+-- :k ((->) Int) * -> *
+-- return me a unary type constrcuor of the right kind
 instance Functor ((->) t) where
   (<$>) ::
     (a -> b)
     -> ((->) t a)
     -> ((->) t b)
-  (<$>) =
-    error "todo: Course.Functor (<$>)#((->) t)"
+--  (<$>) f g = f . g
+  (<$>) = (.)
+--    error "todo: Course.Functor (<$>)#((->) t)"
+
+-- (a -> b) -> (typevar -> a) -> (typevar -> b)
+--  f       -> (t -> a) -> (t -> b)
+-- we have a function and we want to map it over (t -> a), we do this by first doing (t -> a) then
+-- put it into the function f which is f . (t->a), or f . g , or (.)
 
 -- | Anonymous map. Maps a constant value on a functor.
 --
@@ -99,8 +117,9 @@ instance Functor ((->) t) where
   a
   -> f b
   -> f a
-(<$) =
-  error "todo: Course.Functor#(<$)"
+--(<$) a = (<$>) (const a)
+(<$) = (<$>) . const
+--  error "todo: Course.Functor#(<$)"
 
 -- | Anonymous map producing unit value.
 --
@@ -119,8 +138,10 @@ void ::
   Functor f =>
   f a
   -> f ()
-void =
-  error "todo: Course.Functor#void"
+-- we want to map the a constant onto our type variable, the constant is
+void = (<$) ()
+
+--  error "todo: Course.Functor#void"
 
 -----------------------
 -- SUPPORT LIBRARIES --

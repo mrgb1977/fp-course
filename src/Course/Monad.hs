@@ -29,6 +29,8 @@ class Applicative f => Monad f where
     (a -> f b)
     -> f a
     -> f b
+-- similar to apply, but the f is now moved inside, additional constraint, bind on applicative
+-- we can now get even more interesting operations
 
 infixr 1 =<<
 
@@ -68,8 +70,13 @@ infixr 1 =<<
   f (a -> b)
   -> f a
   -> f b
-(<*>) =
-  error "todo: Course.Monad#(<*>)"
+--(<*>) fab fa = _undefined =<< fab
+--(<*>) fab fa = (\k -> undefined) =<< fab
+--(<*>) fab fa = (\k -> undefined =<< fa) =<< fab
+(<*>) fab fa = (\k -> (\a -> pure (k a)) =<< fa) =<< fab
+--  error "todo: Course.Monad#(<*>)"
+
+-- above given bind and pure you can derive apply
 
 infixl 4 <*>
 
@@ -82,8 +89,8 @@ instance Monad Id where
     (a -> Id b)
     -> Id a
     -> Id b
-  (=<<) =
-    error "todo: Course.Monad (=<<)#instance Id"
+  (=<<) f (Id a) = f a
+--    error "todo: Course.Monad (=<<)#instance Id"
 
 -- | Binds a function on a List.
 --
@@ -94,8 +101,10 @@ instance Monad List where
     (a -> List b)
     -> List a
     -> List b
-  (=<<) =
-    error "todo: Course.Monad (=<<)#instance List"
+  (=<<) f la = flatten (f <$> la)
+-- we want to map f onto la and flattern
+-- which is just flatMap!!!
+--    error "todo: Course.Monad (=<<)#instance List"
 
 -- | Binds a function on an Optional.
 --
@@ -106,20 +115,24 @@ instance Monad Optional where
     (a -> Optional b)
     -> Optional a
     -> Optional b
-  (=<<) =
-    error "todo: Course.Monad (=<<)#instance Optional"
+  (=<<) _ Empty = Empty
+  (=<<) f (Full a) = f a
+--    error "todo: Course.Monad (=<<)#instance Optional"
+-- or bindOptional!
 
 -- | Binds a function on the reader ((->) t).
 --
 -- >>> ((*) =<< (+10)) 7
 -- 119
+
+-- this is the reader monad
 instance Monad ((->) t) where
   (=<<) ::
     (a -> ((->) t b))
     -> ((->) t a)
     -> ((->) t b)
-  (=<<) =
-    error "todo: Course.Monad (=<<)#instance ((->) t)"
+  (=<<) f g t = f (g t) t
+--    error "todo: Course.Monad (=<<)#instance ((->) t)"
 
 -- | Flattens a combined structure to a single structure.
 --
@@ -138,8 +151,15 @@ join ::
   Monad f =>
   f (f a)
   -> f a
-join =
-  error "todo: Course.Monad#join"
+join = (=<<) id
+-- why is this bind and id
+
+--      (=<<) :: Monad f => (a   -> f b) -> f a     -> f b
+-- also (=<<) :: Monad f => (f b -> f b) -> f (f b) -> f b
+-- we want to bind the function (\a -> \a) (DTV a -> DTV a)
+--  error "todo: Course.Monad#join"
+
+-- join and bind are equal in power can get one from the other
 
 -- | Implement a flipped version of @(=<<)@, however, use only
 -- @join@ and @(<$>)@.
@@ -152,8 +172,10 @@ join =
   f a
   -> (a -> f b)
   -> f b
-(>>=) =
-  error "todo: Course.Monad#(>>=)"
+--(>>=) = flip (=<<)
+-- how to do it using join and map?
+(>>=) da f = join ((<$>) f da )
+--  error "todo: Course.Monad#(>>=)"
 
 infixl 1 >>=
 
@@ -168,8 +190,17 @@ infixl 1 >>=
   -> (a -> f b)
   -> a
   -> f c
-(<=<) =
-  error "todo: Course.Monad#(<=<)"
+(<=<) f g a = (=<<) f (g a)
+
+-- g a :: f b
+-- f   :: b -> f c
+----
+-- ?   :: f c
+--  error "todo: Course.Monad#(<=<)"
+
+-- above same type as (.), just with f in the return position for each function
+-- :t (.) :: (b -> c) -> (a -> b) -> a -> c
+-- we have
 
 infixr 1 <=<
 

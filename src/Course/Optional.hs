@@ -27,8 +27,9 @@ mapOptional ::
   (a -> b)
   -> Optional a
   -> Optional b
-mapOptional =
-  error "todo: Course.Optional#mapOptional"
+mapOptional _ Empty = Empty
+mapOptional f (Full a) = Full (f a)
+--  error "todo: Course.Optional#mapOptional"
 
 -- | Bind the given function on the possible value.
 --
@@ -44,8 +45,9 @@ bindOptional ::
   (a -> Optional b)
   -> Optional a
   -> Optional b
-bindOptional =
-  error "todo: Course.Optional#bindOptional"
+bindOptional _ Empty = Empty
+bindOptional f (Full a) = f a
+--  error "todo: Course.Optional#bindOptional"
 
 -- | Return the possible value if it exists; otherwise, the second argument.
 --
@@ -58,8 +60,11 @@ bindOptional =
   Optional a
   -> a
   -> a
-(??) =
-  error "todo: Course.Optional#(??)"
+(??) Empty a = a
+(??) (Full a) _ = a
+--  error "todo: Course.Optional#(??)"
+
+-- bottom = bottom
 
 -- | Try the first optional for a value. If it has a value, use it; otherwise,
 -- use the second value.
@@ -79,12 +84,20 @@ bindOptional =
   Optional a
   -> Optional a
   -> Optional a
-(<+>) =
-  error "todo: Course.Optional#(<+>)"  
+(<+>) (Full a) _ = (Full a) -- non overlapping and can swap, reason ab out independently
+-- or (<+>) z _ = z -- is correct but less readable (overlapping pattern, and if you swap lines, program has changed!)
+-- other syntax n@(Full _) _ = n -- n is the name of value passed in as argument. called as pattern.
+(<+>) Empty a = a
+--  error "todo: Course.Optional#(<+>)"  
 
+--
 applyOptional :: Optional (a -> b) -> Optional a -> Optional b
-applyOptional f a = bindOptional (\f' -> mapOptional (\a' -> f' a') a) f
+--applyOptional f a = bindOptional (\f' -> mapOptional (\a' -> f' a') a) f
+applyOptional Empty _ = Empty
+applyOptional _ Empty = Empty
+applyOptional (Full f) (Full a) = Full (f a) 
 
+-- checking for Optional twice before we apply the function!!
 twiceOptional :: (a -> b -> c) -> Optional a -> Optional b -> Optional c
 twiceOptional f = applyOptional . mapOptional f
 

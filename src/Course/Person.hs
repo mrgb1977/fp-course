@@ -20,3 +20,7 @@ data Person = Person {
   phone :: Chars
 } deriving (Eq, Show)
 
+--syntax, data type, datatype called person, one constructor called person, takes an Int, Chars..
+-- these also act as record selectors ... :t age
+-- let theperson = Person 45 "Fred" "Freddles" 'y' 7897
+
