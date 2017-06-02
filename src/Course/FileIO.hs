@@ -73,41 +73,78 @@ the contents of c
 -- /Tip:/ use @getArgs@ and @run@
 main ::
   IO ()
-main =
-  error "todo: Course.FileIO#main"
+main = getArgs >>= \a ->
+         case a of
+           Nil ->
+             putStrLn "no Arguments"
+           h:._ ->
+             run h
+--  error "todo: Course.FileIO#main"
 
 type FilePath =
   Chars
 
 -- /Tip:/ Use @getFiles@ and @printFiles@.
 run ::
-  Chars
+  FilePath
   -> IO ()
-run =
-  error "todo: Course.FileIO#run"
+run name = readFile name >>= \c -> getFiles (lines c) >>= \z -> printFiles z
+--  error "todo: Course.FileIO#run"
+
+--  do c <- readFile name
+--     z <- getFiles (lines c)
+--     printFiles z
+
+-- referential transparency substitute expressions with their value without changing program
 
 getFiles ::
   List FilePath
   -> IO (List (FilePath, Chars))
-getFiles =
-  error "todo: Course.FileIO#getFiles"
+--getFiles Nil = pure ()
+--getFiles (h:.t) = getFile h <* getFiles t
+--  error "todo: Course.FileIO#getFiles"
+--getFiles la = join . ((<$>) getFile la)
+getFiles ps = sequence ((<$>) getFile ps) -- :: List (IO (fp,c))
+
 
 getFile ::
   FilePath
   -> IO (FilePath, Chars)
-getFile =
-  error "todo: Course.FileIO#getFile"
+getFile fp =  (<$>) (\c -> (fp, c)) (readFile fp)
+--  error "todo: Course.FileIO#getFile"
+
+-- getFile
 
 printFiles ::
   List (FilePath, Chars)
   -> IO ()
-printFiles =
-  error "todo: Course.FileIO#printFiles"
+printFiles Nil = pure ()
+printFiles ((fp, contents):.t) = printFile fp contents <* printFiles t
+
+--recursion so we should be able to foldright
+--printFiles = foldRight (\(fp, contents) _ -> printFile fp contents) (pure ())
+--  error "todo: Course.FileIO#printFiles"
+
+--Useful Functions --
+--
+--  getArgs :: IO (List Chars)
+--  putStrLn :: Chars -> IO ()
+--  readFile :: Chars -> IO Chars
+--  lines :: Chars -> List Chars
+--  void :: IO a -> IO ()
+
+-- sequence :: Applicative f => List (f a) -> f (List a)
+-- (<$>) :: Functor f => (a -> b) -> f a -> f b
 
 printFile ::
   FilePath
   -> Chars
   -> IO ()
-printFile =
-  error "todo: Course.FileIO#printFile"
+printFile name contents = 
+  do putStrLn ("======== " ++ name)
+     putStrLn contents
+
+-- Or putStrLn name *> putStrLn contents
+--readFile fp >>= putStrLn 
+--  error "todo: Course.FileIO#printFile"
 
