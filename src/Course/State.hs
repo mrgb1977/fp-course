@@ -44,10 +44,7 @@ instance Functor (State s) where
 
 --  (<$>) f (State s) = undefined
 --State(\s' -> (f, s))
-
---
--- f (State s) = State(\s' -> let (a,b) = s s' in (f a, b))
-                   
+--                  
 --    error "todo: Course.State#(<$>)"
 
 -- | Implement the `Applicative` instance for `State s`.
